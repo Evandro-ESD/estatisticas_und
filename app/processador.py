@@ -185,4 +185,60 @@ class ProcessadorDados:
         return  por_guarnicao
 
 
+    #####################
+    def agregar_por_coluna(
+            self,
+            coluna_valor: str,
+            colunas_grupo: list,
+            operacao: str = "sum",
+            remover_zeros: bool = True,
+            remover_nulos: bool = True
+    ) -> pd.DataFrame:
+        """
+        Agrega uma coluna numérica por grupos definidos.
+
+        Args:
+            coluna_valor (str): Nome da coluna numérica a ser agregada
+            colunas_grupo (list): Lista de colunas para agrupamento
+            operacao (str): Operação de agregação ('sum', 'mean', 'count', 'max', 'min')
+            remover_zeros (bool): Remove valores zerados antes da agregação
+            remover_nulos (bool): Remove valores nulos antes da agregação
+
+        Returns:
+            pd.DataFrame: DataFrame agregado
+        """
+
+        if self.df is None:
+            raise ValueError("Dados não carregados")
+
+        if coluna_valor not in self.df.columns:
+            raise ValueError(f"Coluna '{coluna_valor}' não encontrada")
+
+        # Garantir tipo numérico
+        self.df[coluna_valor] = pd.to_numeric(
+            self.df[coluna_valor],
+            errors="coerce"
+        )
+
+        df_filtrado = self.df.copy()
+
+        if remover_nulos:
+            df_filtrado = df_filtrado[df_filtrado[coluna_valor].notna()]
+
+        if remover_zeros:
+            df_filtrado = df_filtrado[df_filtrado[coluna_valor] != 0]
+
+        if operacao not in ["sum", "mean", "count", "max", "min"]:
+            raise ValueError("Operação inválida")
+
+        resultado = (
+            df_filtrado
+            .groupby(colunas_grupo)[coluna_valor]
+            .agg(operacao)
+            .reset_index()
+        )
+
+        return resultado
+
+
 

@@ -57,9 +57,32 @@ def main():
     
     '''
 
+    ##
+
     #print(processador.total_presos())
 
     print(processador.total_presos_por_guarnicao())
+
+    df = processador.agregar_por_coluna(
+        coluna_valor="PRESOS/APREENDIDOS",
+        colunas_grupo=["TIPO DE SERVIÇO", "MÊS"],
+        operacao="sum"
+    )
+
+    df = processador.agregar_por_coluna(
+        coluna_valor="VEÍCULOS RECUPERADOS",
+        colunas_grupo=["MÊS"],
+        operacao="mean"
+    )
+
+    df = processador.agregar_por_coluna(
+        coluna_valor="PRESOS/APREENDIDOS",
+        colunas_grupo=["TIPO DE SERVIÇO"],
+        operacao="count",
+        remover_zeros=False
+    )
+
+    ##
 
     return 0
 
