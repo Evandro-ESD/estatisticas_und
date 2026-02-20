@@ -10,6 +10,8 @@ from pathlib import Path
 from app.processador import ProcessadorDados
 from app.config import ARQUIVO_ESTATISTICAS
 
+from app.services.graficos import GraficoService
+
 logger = logging.getLogger(__name__)
 
 
@@ -80,6 +82,21 @@ def main():
         colunas_grupo=["TIPO DE SERVIÇO"],
         operacao="count",
         remover_zeros=False
+    )
+
+    grafico_service = GraficoService()
+
+    df_agrupado = processador.agregar_por_coluna(
+        coluna_valor="PRESOS/APREENDIDOS",
+        colunas_grupo=["TIPO DE SERVIÇO"],
+        operacao="sum"
+    )
+
+    grafico_service.gerar(
+        df=df_agrupado,
+        coluna_x="TIPO DE SERVIÇO",
+        coluna_y="PRESOS/APREENDIDOS",
+        titulo="Total de Presos por Tipo de Serviço"
     )
 
     ##
