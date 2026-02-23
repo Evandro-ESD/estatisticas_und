@@ -167,7 +167,7 @@ class ProcessadorDados:
 
         return resumo
 
-    def total_presos(self):
+    def total_veiculos_recuperados(self):
 
         logger.info("VEÍCULOS RECUPERADOS ")
 
@@ -186,6 +186,7 @@ class ProcessadorDados:
 
 
     #####################
+
     def agregar_por_coluna(
             self,
             coluna_valor: str,
@@ -239,6 +240,59 @@ class ProcessadorDados:
         )
 
         return resultado
+
+
+    ###  ###########################
+    def preparar_dados_barras_por_mes(
+            self,
+            coluna_valor: str
+    ):
+        """
+        Retorna dados estruturados para gráfico de barras agrupadas:
+        - categorias (meses ordenados)
+        - data_series (valores por serviço)
+        - series_labels (tipos de serviço)
+        """
+
+        '''
+        MESES = (
+            "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL",
+            "MAIO", "JUNHO", "JULHO", "AGOSTO",
+            "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"
+        )
+        '''
+
+        MESES = tuple(self.df["MÊS"])
+
+        # 1️⃣ Agregar usando seu próprio método
+        agregado = self.agregar_por_coluna(
+            coluna_valor=coluna_valor,
+            colunas_grupo=["MÊS", "TIPO DE SERVIÇO"],
+            operacao="sum",
+            remover_zeros=False
+        )
+
+        # 2️⃣ Padronizar mês
+        agregado["MÊS"] = (
+            agregado["MÊS"]
+            .str.strip()
+            .str.upper()
+        )
+
+        # 3️⃣ Pivot
+        pivot = (
+            agregado
+            .pivot(index="MÊS", columns="TIPO DE SERVIÇO", values=coluna_valor)
+            .reindex(MESES)
+            .fillna(0)
+        )
+
+        categorias = list(pivot.index)
+        series_labels = list(pivot.columns)
+        data_series = [pivot[col].tolist() for col in pivot.columns]
+
+        return categorias, data_series, series_labels
+
 
 
 

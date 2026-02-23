@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import logging
 from pathlib import Path
+import numpy as np
 
 from app.config import GRAFICOS_DIR
 
@@ -62,3 +63,4 @@ class GraficoService:
         plt.show()
 
         return caminho
+

@@ -61,8 +61,6 @@ def main():
 
     ##
 
-    #print(processador.total_presos())
-
     print(processador.total_presos_por_guarnicao())
 
     df = processador.agregar_por_coluna(
@@ -86,18 +84,53 @@ def main():
 
     grafico_service = GraficoService()
 
-    df_agrupado = processador.agregar_por_coluna(
+    categorias, data_series, series_labels = \
+        processador.preparar_dados_barras_por_mes(
+            coluna_valor="PRESOS/APREENDIDOS"
+        )
+
+    grouped_bar_chart(
+        categories=categorias,
+        data_series=data_series,
+        series_labels=series_labels,
+        title="Presos/Apreendidos por Mês e Serviço",
+        ylabel="Quantidade"
+    )
+
+
+
+    '''
+           # VEÍCULOS RECUPERADOS
+    '''
+    df_agrupado_presos = processador.agregar_por_coluna(
         coluna_valor="PRESOS/APREENDIDOS",
-        colunas_grupo=["TIPO DE SERVIÇO"],
+        colunas_grupo=["TIPO DE SERVIÇO", 'MÊS'],
         operacao="sum"
     )
 
     grafico_service.gerar(
-        df=df_agrupado,
+        df=df_agrupado_presos,
         coluna_x="TIPO DE SERVIÇO",
         coluna_y="PRESOS/APREENDIDOS",
         titulo="Total de Presos por Tipo de Serviço"
     )
+
+    '''
+        # VEÍCULOS RECUPERADOS
+    '''
+    df_agrupado_veiculos = processador.agregar_por_coluna(
+        coluna_valor="VEÍCULOS RECUPERADOS",
+        colunas_grupo=["TIPO DE SERVIÇO", 'MÊS'],
+        operacao="sum"
+    )
+
+    grafico_service.gerar(
+        df=df_agrupado_veiculos,
+        coluna_x="TIPO DE SERVIÇO",
+        coluna_y="VEÍCULOS RECUPERADOS",
+        titulo="Total de veículos recuperados por Tipo de Serviço"
+    )
+    
 
     ##
 
