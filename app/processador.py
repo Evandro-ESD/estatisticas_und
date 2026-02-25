@@ -69,13 +69,17 @@ class ProcessadorDados:
         self.df.dropna(axis=1, how='all', inplace=True)
 
         # Padronizar nomes de colunas
-        self.df.columns = [self._padronizar_nome_coluna(col) for col in self.df.columns]
+        # retirado pq comentei a função _padronizar_nome_coluna
+        # #self.df.columns = [self._padronizar_nome_coluna(col) for col in self.df.columns]
+        self.df.columns = [col for col in self.df.columns]
 
         # Remover duplicatas
         self.df.drop_duplicates(inplace=True)
 
         logger.info(f"Limpeza concluída: {self.df.shape[0]} linhas restantes")
 
+    '''
+    
     def _padronizar_nome_coluna(self, nome: str) -> str:
         """Padroniza nomes de colunas"""
         if not isinstance(nome, str):
@@ -92,6 +96,7 @@ class ProcessadorDados:
                 .replace('í', 'i')
                 .replace('ó', 'o')
                 .replace('ú', 'u'))
+    '''
 
     def calcular_estatisticas(self) -> Dict[str, Any]:
         """Calcula estatísticas básicas dos dados"""
@@ -175,16 +180,30 @@ class ProcessadorDados:
         return res
 
     def total_presos_por_guarnicao(self):
-        #por_guarnicao = self.df.groupby(['TIPO DE SERVIÇO', 'MÊS', ])['PRESOS/APREENDIDOS'].sum().reset_index()
-        self.df['PRESOS/APREENDIDOS'] = pd.to_numeric(self.df['PRESOS/APREENDIDOS'], errors='coerce')
 
-        df_filtrado = self.df[(self.df['PRESOS/APREENDIDOS'].notna()) & (self.df['PRESOS/APREENDIDOS'] != 0)]
+        if self.df is None:
+            raise ValueError("Execute carregar_dados() antes de processar.")
 
-        por_guarnicao = df_filtrado.groupby(['TIPO DE SERVIÇO', 'MÊS', ])['PRESOS/APREENDIDOS'].sum().reset_index()
+        df = self.df.copy()
 
-        return  por_guarnicao
+        df['PRESOS/APREENDIDOS'] = pd.to_numeric(
+            df['PRESOS/APREENDIDOS'],
+            errors='coerce'
+        )
 
+        df_filtrado = df[
+            (df['PRESOS/APREENDIDOS'].notna()) &
+            (df['PRESOS/APREENDIDOS'] != 0)
+            ]
 
+        resultado = (
+            df_filtrado
+            .groupby(['TIPO DE SERVIÇO', 'MÊS'])['PRESOS/APREENDIDOS']
+            .sum()
+            .reset_index()
+        )
+
+        return resultado
     #####################
 
     def agregar_por_coluna(
@@ -216,8 +235,10 @@ class ProcessadorDados:
             raise ValueError(f"Coluna '{coluna_valor}' não encontrada")
 
         # Garantir tipo numérico
-        self.df[coluna_valor] = pd.to_numeric(
-            self.df[coluna_valor],
+        df_filtrado = self.df.copy()
+
+        df_filtrado[coluna_valor] = pd.to_numeric(
+            df_filtrado[coluna_valor],
             errors="coerce"
         )
 
@@ -243,28 +264,17 @@ class ProcessadorDados:
 
 
     ###  ###########################
-    def preparar_dados_barras_por_mes(
-            self,
-            coluna_valor: str
-    ):
-        """
-        Retorna dados estruturados para gráfico de barras agrupadas:
-        - categorias (meses ordenados)
-        - data_series (valores por serviço)
-        - series_labels (tipos de serviço)
-        """
+    def preparar_dados_barras_por_mes(self, coluna_valor: str):
 
-        '''
-        MESES = (
+        if self.df is None:
+            raise ValueError("Dados não carregados")
+
+        ORDEM_MESES = [
             "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL",
             "MAIO", "JUNHO", "JULHO", "AGOSTO",
             "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"
-        )
-        '''
+        ]
 
-        MESES = tuple(self.df["MÊS"])
-
-        # 1️⃣ Agregar usando seu próprio método
         agregado = self.agregar_por_coluna(
             coluna_valor=coluna_valor,
             colunas_grupo=["MÊS", "TIPO DE SERVIÇO"],
@@ -272,26 +282,24 @@ class ProcessadorDados:
             remover_zeros=False
         )
 
-        # 2️⃣ Padronizar mês
-        agregado["MÊS"] = (
-            agregado["MÊS"]
-            .str.strip()
-            .str.upper()
-        )
+        agregado["MÊS"] = agregado["MÊS"].str.strip().str.upper()
 
-        # 3️⃣ Pivot
         pivot = (
             agregado
             .pivot(index="MÊS", columns="TIPO DE SERVIÇO", values=coluna_valor)
-            .reindex(MESES)
             .fillna(0)
         )
 
-        categorias = list(pivot.index)
-        series_labels = list(pivot.columns)
-        data_series = [pivot[col].tolist() for col in pivot.columns]
+        pivot = pivot.reindex(
+            [m for m in ORDEM_MESES if m in pivot.index]
+        )
 
-        return categorias, data_series, series_labels
+        return (
+            list(pivot.index),
+            list(pivot.columns),
+            [pivot[col].tolist() for col in pivot.columns]
+        )
+
 
 
 

@@ -88,7 +88,7 @@ def main():
         processador.preparar_dados_barras_por_mes(
             coluna_valor="PRESOS/APREENDIDOS"
         )
-
+    '''
     grouped_bar_chart(
         categories=categorias,
         data_series=data_series,
@@ -96,6 +96,7 @@ def main():
         title="Presos/Apreendidos por Mês e Serviço",
         ylabel="Quantidade"
     )
+    '''
 
 
 
